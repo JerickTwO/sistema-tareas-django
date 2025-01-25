@@ -32,18 +32,6 @@ class Tarea(models.Model):
 
     titulo = models.CharField(max_length=255)
     descripcion = models.TextField()
-    asignada_a = models.ForeignKey(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name='tareas',
-        limit_choices_to={'rol': 'estudiante'}
-    )
-    creada_por = models.ForeignKey(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name='tareas_creadas',
-        limit_choices_to={'rol': 'admin'}
-    )
     estado = models.CharField(max_length=15, choices=ESTADOS, default='pendiente')
     creada_en = models.DateTimeField(auto_now_add=True)
     actualizada_en = models.DateTimeField(auto_now=True)
