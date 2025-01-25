@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -7,6 +7,8 @@ from django.views import View
 import json
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login
+
+User = get_user_model()
 
 
 def generate_jwt_token(user):
@@ -25,25 +27,39 @@ class RegisterView(View):
             data = json.loads(request.body)
             username = data.get("username")
             password = data.get("password")
+            rol = data.get("rol")  # Validar el rol
+
+            # Validar campos obligatorios
+            if not username or not password or not rol:
+                return JsonResponse(
+                    {"error": "Username, password, and role are required"}, status=400
+                )
+
+            # Validar si el rol es válido
+            if rol not in ["admin", "estudiante"]:
+                return JsonResponse({"error": "Invalid role"}, status=400)
 
             # Validar si el usuario ya existe
             if User.objects.filter(username=username).exists():
                 return JsonResponse({"error": "Username already exists"}, status=400)
 
-            # Crear usuario con contraseña cifrada
-            user = User(username=username)
-            user.set_password(password)  # Usa bcrypt automáticamente
+            # Crear usuario
+            user = User(username=username, rol=rol)
+            user.set_password(password)  # Cifrar contraseña
             user.save()
 
-            # Generar un token JWT para el nuevo usuario
+            # Generar un token JWT
             tokens = generate_jwt_token(user)
 
             return JsonResponse(
                 {
                     "message": "User registered successfully",
                     "tokens": tokens,
-                }
+                },
+                status=201,
             )
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
