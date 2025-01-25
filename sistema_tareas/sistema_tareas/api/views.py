@@ -6,5 +6,6 @@ from sistema_tareas.api.serializer import TareaSerializer
 
 
 class TareaViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Tarea.objects.all()
     serializer_class = TareaSerializer
