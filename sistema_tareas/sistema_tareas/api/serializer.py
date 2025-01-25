@@ -1,18 +1,18 @@
 from rest_framework import serializers
-from tareas.models import Tarea, Comentario, Usuario
+from tareas.models import Tasks, Comment, User
 
-class TareaSerializer(serializers.ModelSerializer):
+class TasksSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Tarea
+        model = Tasks
         fields = '__all__'
         
-class ComentarioSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Comentario
+        model = Comment
         fields = '__all__'
 
-class UsuarioSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Usuario
+        model = User
         fields = '__all__'
         

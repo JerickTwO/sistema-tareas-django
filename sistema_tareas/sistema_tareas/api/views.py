@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from tareas.models import Tarea, Comentario, Usuario
-from sistema_tareas.api.serializer import TareaSerializer
+from tareas.models import Tasks, Comment, User
+from sistema_tareas.api.serializer import TasksSerializer
 
 
-class TareaViewSet(viewsets.ModelViewSet):
+class TasksViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Tarea.objects.all()
-    serializer_class = TareaSerializer
+    queryset = Tasks.objects.all()
+    serializer_class = TasksSerializer

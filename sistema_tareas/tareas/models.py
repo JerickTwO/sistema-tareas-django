@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-class Usuario(AbstractUser):
+class User(AbstractUser):
     ROLES = (
         ('admin', 'Administrador'),
         ('estudiante', 'Estudiante'),
@@ -24,31 +24,22 @@ class Usuario(AbstractUser):
         return self.username
 
 
-class Tarea(models.Model):
-    ESTADOS = (
-        ('pendiente', 'Pendiente'),
-        ('completada', 'Completada'),
-    )
-
-    titulo = models.CharField(max_length=255)
-    descripcion = models.TextField()
-    estado = models.CharField(max_length=15, choices=ESTADOS, default='pendiente')
-    creada_en = models.DateTimeField(auto_now_add=True)
-    actualizada_en = models.DateTimeField(auto_now=True)
+class Tasks(models.Model):
+    title = models.CharField(max_length=255)               # Título de la tarea
+    description = models.TextField(null=True, blank=True)  # Descripción (opcional)
+    due_date = models.DateTimeField(null=True, blank=True) # Fecha de vencimiento (opcional)
+    priority = models.CharField(max_length=255, null=True, blank=True)  # Prioridad
+    task_status = models.BooleanField(default=False)       # Estado de la tarea (False = pendiente, True = completada)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Relación con el usuario (clave foránea)
 
     def __str__(self):
-        return self.titulo
+        return self.title
 
-
-class Comentario(models.Model):
-    tarea = models.ForeignKey(Tarea, on_delete=models.CASCADE, related_name='comentarios')
-    comentado_por = models.ForeignKey(
-        Usuario,
-        on_delete=models.CASCADE,
-        limit_choices_to={'rol': 'estudiante'}
-    )
-    contenido = models.TextField()
-    creado_en = models.DateTimeField(auto_now_add=True)
+class Comment(models.Model):
+    content = models.TextField()                           # Contenido del comentario
+    create_at = models.DateTimeField(auto_now_add=True)    # Fecha de creación (se genera automáticamente)
+    task = models.ForeignKey(Tasks, on_delete=models.CASCADE, related_name='comments')  # Relación con la tarea
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Relación con el usuario
 
     def __str__(self):
-        return f"Comentario de {self.comentado_por.username} en {self.tarea.titulo}"
+        return f"Comentario de {self.user.username} en {self.task.title}"
