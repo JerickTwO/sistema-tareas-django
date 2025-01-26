@@ -13,6 +13,11 @@ User = get_user_model()
 
 def generate_jwt_token(user):
     """Genera un token JWT para un usuario"""
+
+    def get_user_role(user):
+        """Devuelve el rol del usuario en formato de cadena"""
+        return "ADMINISTRADOR" if user.rol == 1 else "ESTUDIANTE"
+
     refresh = RefreshToken.for_user(user)
     return {
         "refresh": str(refresh),
@@ -30,8 +35,7 @@ class RegisterView(View):
             name = data.get("name")
             password = data.get("password")
             confirm_password = data.get("confirmPassword")
-            role = data.get("role", "ESTUDIANTE").upper()
-            
+            role = data.get("role", False)
 
             # Validar campos obligatorios
             if not name or not password or not email:
@@ -47,7 +51,7 @@ class RegisterView(View):
             # Validar si el usuario ya existe
             if User.objects.filter(email=email).exists():
                 return JsonResponse({"error": "Email already exists"}, status=400)
-            
+
             if password != confirm_password:
                 return JsonResponse(
                     {"error": "Passwords do not match"},
@@ -55,7 +59,7 @@ class RegisterView(View):
                 )
 
             # Crear usuario
-            user = User(username=name, email=email ,rol=role)
+            user = User(username=name, email=email, rol=role)
             user.set_password(password)  # Cifrar contraseña
             user.save()
 
@@ -65,7 +69,7 @@ class RegisterView(View):
                     "id": user.id,
                     "name": user.username,
                     "password": None,
-                    "role": user.rol.upper(),
+                    "role": "ADMIN" if user.role else "ESTUDIANTE",
                 },
                 status=201,
             )
@@ -82,9 +86,10 @@ class LoginView(View):
             data = json.loads(request.body)
             email = data.get("email")
             password = data.get("password")
+            role = data.get("userRole")
 
             # Autenticar al usuario
-            user = authenticate(request, username=email, password=password)
+            user = authenticate(request, username=email, password=password, role=role)
             if user is not None:
                 login(request, user)  # Inicia sesión
 
@@ -95,7 +100,7 @@ class LoginView(View):
                     {
                         "jwt": tokens["jwt"],  # Incluye solo el token de acceso
                         "userId": user.id,  # ID del usuario autenticado
-                        "userRole": user.rol.upper(),  # Rol del usuario en mayúsculas
+                        "userRole": "ADMIN" if role else "ESTUDIANTE",
                     },
                     status=200,
                 )

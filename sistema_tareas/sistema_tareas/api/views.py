@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class AdminController(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     # Obtener todos los usuarios
     def get(self, request):
@@ -119,7 +119,7 @@ class AdminController(APIView):
 
 
 class StudentController(APIView):
-
+    permission_classes = [IsAuthenticated]
     # Obtener tareas del usuario autenticado
     def get(self, request):
         tasks = Tasks.objects.filter(user=request.user)
