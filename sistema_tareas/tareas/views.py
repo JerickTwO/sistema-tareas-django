@@ -100,7 +100,7 @@ class LoginView(View):
                     {
                         "jwt": tokens["jwt"],  # Incluye solo el token de acceso
                         "userId": user.id,  # ID del usuario autenticado
-                        "userRole": "ADMIN" if role else "ESTUDIANTE",
+                        "userRole": "ADMINISTRADOR" if user.rol == 1 else "ESTUDIANTE",
                     },
                     status=200,
                 )

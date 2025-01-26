@@ -33,6 +33,18 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="username")  # Renombrar 'username' a 'name'
+    password = serializers.SerializerMethodField()  # Siempre devolver 'null'
+    userRole = (
+        serializers.SerializerMethodField()
+    )  # Mapear 'rol' a 'ADMINISTRADOR' o 'ESTUDIANTE'
+
     class Meta:
         model = User
-        fields = "__all__"
+        fields = ["id", "name", "email", "password", "userRole"]
+
+    def get_password(self, obj):
+        return None  # Ocultar el valor real de la contraseña
+
+    def get_userRole(self, obj):
+        return "ADMINISTRADOR" if obj.rol else "ESTUDIANTE"

@@ -15,9 +15,8 @@ class AdminController(APIView):
 
     # Obtener todos los usuarios
     def get(self, request):
-
-        tasks = Tasks.objects.all()
-        serializer = TasksSerializer(tasks, many=True)
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # Crear una tarea
@@ -120,6 +119,7 @@ class AdminController(APIView):
 
 class StudentController(APIView):
     permission_classes = [IsAuthenticated]
+
     # Obtener tareas del usuario autenticado
     def get(self, request):
         tasks = Tasks.objects.filter(user=request.user)

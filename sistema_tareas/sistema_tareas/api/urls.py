@@ -3,7 +3,7 @@ from sistema_tareas.api.views import AdminController, StudentController
 
 urlpatterns = [
     # Rutas de AdminController
-    path("admin/users", AdminController.as_view(), name="get_users"),
+    path("admin/users", AdminController.as_view(), name="get"),
     path("admin/task", AdminController.as_view(), name="create_task"),
     path("admin/tasks", AdminController.as_view(), name="get_all_tasks"),
     path("admin/task/<int:id>", AdminController.as_view(), name="delete_task"),
