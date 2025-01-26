@@ -25,42 +25,47 @@ class RegisterView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
+            id = data.get("id")
             email = data.get("email")
-            username = data.get("username")
+            name = data.get("name")
             password = data.get("password")
-            rol = data.get("role")  # Validar el rol
+            confirm_password = data.get("confirmPassword")
+            role = data.get("role", "ESTUDIANTE").upper()
+            
 
             # Validar campos obligatorios
-            if not username or not password or not rol or not email:
+            if not name or not password or not email:
                 return JsonResponse(
-                    {"error": "username, password, email, and role are required"},
+                    {"error": "username, password, and email are required"},
                     status=400,
                 )
 
-            # Validar si el rol es válido
-            if rol not in ["admin", "estudiante"]:
-                return JsonResponse({"error": "Invalid role"}, status=400)
-
             # Validar si el usuario ya existe
-            if User.objects.filter(username=username).exists():
+            if User.objects.filter(username=name).exists():
                 return JsonResponse({"error": "Username already exists"}, status=400)
 
             # Validar si el usuario ya existe
             if User.objects.filter(email=email).exists():
-                return JsonResponse({"error": "Username already exists"}, status=400)
+                return JsonResponse({"error": "Email already exists"}, status=400)
+            
+            if password != confirm_password:
+                return JsonResponse(
+                    {"error": "Passwords do not match"},
+                    status=400,
+                )
 
             # Crear usuario
-            user = User(username=username, rol=rol, email=email)
+            user = User(username=name, email=email ,rol=role)
             user.set_password(password)  # Cifrar contraseña
             user.save()
 
-            # Generar un token JWT
-            tokens = generate_jwt_token(user)
-
             return JsonResponse(
                 {
-                    "message": "User registered successfully",
-                    "tokens": tokens,
+                    "email": user.email,
+                    "id": user.id,
+                    "name": user.username,
+                    "password": None,
+                    "role": user.rol.upper(),
                 },
                 status=201,
             )
@@ -98,4 +103,3 @@ class LoginView(View):
                 return JsonResponse({"error": "Invalid credentials"}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
-
