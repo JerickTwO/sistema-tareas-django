@@ -8,8 +8,9 @@ class User(AbstractUser):
         ("estudiante", "Estudiante"),
     )
     rol = models.CharField(
-        max_length=10, choices=ROLES
+        max_length=10, choices=ROLES, default="estudiante"
     )  # No null ni blank -> obligatorio
+    email = models.EmailField(unique=True)  # Campo de correo electrónico único
 
     def __str__(self):
         return f"{self.username} ({self.rol})"

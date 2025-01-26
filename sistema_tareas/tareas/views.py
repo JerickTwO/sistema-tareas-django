@@ -25,14 +25,16 @@ class RegisterView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
+            email = data.get("email")
             username = data.get("username")
             password = data.get("password")
-            rol = data.get("rol")  # Validar el rol
+            rol = data.get("role")  # Validar el rol
 
             # Validar campos obligatorios
-            if not username or not password or not rol:
+            if not username or not password or not rol or not email:
                 return JsonResponse(
-                    {"error": "Username, password, and role are required"}, status=400
+                    {"error": "username, password, email, and role are required"},
+                    status=400,
                 )
 
             # Validar si el rol es válido
@@ -43,8 +45,12 @@ class RegisterView(View):
             if User.objects.filter(username=username).exists():
                 return JsonResponse({"error": "Username already exists"}, status=400)
 
+            # Validar si el usuario ya existe
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({"error": "Username already exists"}, status=400)
+
             # Crear usuario
-            user = User(username=username, rol=rol)
+            user = User(username=username, rol=rol, email=email)
             user.set_password(password)  # Cifrar contraseña
             user.save()
 
@@ -69,11 +75,11 @@ class LoginView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            username = data.get("username")
+            email = data.get("email")
             password = data.get("password")
 
             # Autenticar al usuario
-            user = authenticate(username=username, password=password)
+            user = authenticate(request, username=email, password=password)
             if user is not None:
                 login(request, user)  # Inicia sesión
 
@@ -82,7 +88,7 @@ class LoginView(View):
 
                 return JsonResponse(
                     {
-                        "message": "Login successful",
+                        "message": f"Login successful, welcome {user.username}",
                         "tokens": tokens,
                     }
                 )
