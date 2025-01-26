@@ -16,7 +16,7 @@ def generate_jwt_token(user):
     refresh = RefreshToken.for_user(user)
     return {
         "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "jwt": str(refresh.access_token),
     }
 
 
@@ -88,11 +88,14 @@ class LoginView(View):
 
                 return JsonResponse(
                     {
-                        "message": f"Login successful, welcome {user.username}",
-                        "tokens": tokens,
-                    }
+                        "jwt": tokens["jwt"],  # Incluye solo el token de acceso
+                        "userId": user.id,  # ID del usuario autenticado
+                        "userRole": user.rol.upper(),  # Rol del usuario en mayúsculas
+                    },
+                    status=200,
                 )
             else:
                 return JsonResponse({"error": "Invalid credentials"}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+
