@@ -171,7 +171,7 @@ def create_comment(request, id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_comments_by_tasks(request, id):
-    comments = Comment.objects.filter(tasks_id=id)
+    comments = Comment.objects.filter(task_id=id)
     serializer = CommentSerializer(comments, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -181,20 +181,23 @@ class GetCommentsByTaskController(APIView):
 
     def get(self, request, task_id):
         try:
-            task = Tasks.objects.get(pk=task_id, user=request.user)
-            comments = task.comments.all()
+            # Filtrar comentarios por task_id
+            comments = Comment.objects.filter(task_id=task_id)
+            if not comments.exists():
+                return Response({"message": "No comments found for this task"}, status=404)
+
             serializer = CommentSerializer(comments, many=True)
             return Response(serializer.data, status=200)
-        except Tasks.DoesNotExist:
-            return Response({"error": "Task not found"}, status=404)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class CreateCommentController(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, task_id):
-        # Intentar obtener 'content' desde el cuerpo de la solicitud (JSON)
-        content = request.data.get("content")
+        # Obtener el contenido desde los query params
+        content = request.query_params.get("content")
         if not content:
             return Response({"error": "Content is required"}, status=400)
 
@@ -204,11 +207,11 @@ class CreateCommentController(APIView):
         except Tasks.DoesNotExist:
             return Response({"error": "Task not found"}, status=404)
 
-        # Crear el comentario
+        # Crear y guardar el comentario
         comment = Comment.objects.create(task=task, user=request.user, content=content)
         serializer = CommentSerializer(comment)
         return Response(
-            {"message": "Comment created successfully", "comment": serializer.data},
+            (serializer.data),
             status=201,
         )
 
@@ -246,7 +249,6 @@ class UpdateTaskStatusController(APIView):
             return Response(serializer.data, status=200)  # Devuelve un array
         except Tasks.DoesNotExist:
             return Response({"error": "Task not found"}, status=404)
-
 
 
 class StudentTasksController(APIView):
