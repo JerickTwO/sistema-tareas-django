@@ -3,8 +3,10 @@ from tareas.models import Tasks, Comment, User
 
 
 class TasksSerializer(serializers.ModelSerializer):
-    studentId = serializers.SerializerMethodField()
-    studentName = serializers.SerializerMethodField()
+    taskStatus = serializers.SerializerMethodField()
+    dueDate = serializers.DateTimeField(source="due_date", allow_null=True)
+    studentId = serializers.IntegerField(source="user.id")
+    studentName = serializers.CharField(source="user.username")
 
     class Meta:
         model = Tasks
@@ -12,18 +14,16 @@ class TasksSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
-            "due_date",
+            "dueDate",
             "priority",
-            "task_status",
+            "taskStatus",
             "studentId",
             "studentName",
         ]
 
-    def get_studentId(self, obj):
-        return obj.user.id if obj.user else None
-
-    def get_studentName(self, obj):
-        return obj.user.username if obj.user else None
+    def get_taskStatus(self, obj):
+        # Usa el método automático de Django para obtener el texto de STATUS_CHOICES
+        return obj.get_task_status_display() or "ESTADO NO DEFINIDO"
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -33,8 +33,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="username")  # Renombrar 'username' a 'name'
-    password = serializers.SerializerMethodField()  # Siempre devolver 'null'
+    name = serializers.CharField(source="username")
+    password = serializers.SerializerMethodField()
     userRole = (
         serializers.SerializerMethodField()
     )  # Mapear 'rol' a 'ADMINISTRADOR' o 'ESTUDIANTE'

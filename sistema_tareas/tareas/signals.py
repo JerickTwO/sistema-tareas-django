@@ -13,6 +13,6 @@ def create_default_admin(sender, **kwargs):
             username="admin",
             email="admin@test.com",
             password="admin",
-            rol=1  # Si tienes un campo `rol` personalizado
+            rol=0  # Si tienes un campo `rol` personalizado
         )
         print("Usuario administrador creado: admin")

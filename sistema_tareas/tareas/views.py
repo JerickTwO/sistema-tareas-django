@@ -13,11 +13,6 @@ User = get_user_model()
 
 def generate_jwt_token(user):
     """Genera un token JWT para un usuario"""
-
-    def get_user_role(user):
-        """Devuelve el rol del usuario en formato de cadena"""
-        return "ADMINISTRADOR" if user.rol == 1 else "ESTUDIANTE"
-
     refresh = RefreshToken.for_user(user)
     return {
         "refresh": str(refresh),
@@ -35,7 +30,7 @@ class RegisterView(View):
             name = data.get("name")
             password = data.get("password")
             confirm_password = data.get("confirmPassword")
-            role = data.get("role", False)
+            role = data.get("role", True)
 
             # Validar campos obligatorios
             if not name or not password or not email:
@@ -65,11 +60,11 @@ class RegisterView(View):
 
             return JsonResponse(
                 {
-                    "email": user.email,
                     "id": user.id,
+                    "email": user.email,
                     "name": user.username,
                     "password": None,
-                    "role": "ADMIN" if user.role else "ESTUDIANTE",
+                    "role": "ESTUDIANTE" if user.rol == 1 else "ADMININSTRADOR",
                 },
                 status=201,
             )
@@ -100,7 +95,7 @@ class LoginView(View):
                     {
                         "jwt": tokens["jwt"],  # Incluye solo el token de acceso
                         "userId": user.id,  # ID del usuario autenticado
-                        "userRole": "ADMINISTRADOR" if user.rol == 1 else "ESTUDIANTE",
+                        "userRole": "ESTUDIANTE" if user.rol == 1 else "ADMININSTRADOR",
                     },
                     status=200,
                 )

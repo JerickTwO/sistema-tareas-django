@@ -13,31 +13,37 @@ from rest_framework.permissions import IsAuthenticated
 class AdminController(APIView):
     permission_classes = [IsAuthenticated]
 
-    # Obtener todos los usuarios
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
+        if "tasks" in request.path:
+            return self.get_all_tasks(request)
+        elif "users" in request.path:
+            return self.get_all_users(request)
+        return Response(
+            {"error": "Invalid endpoint"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def get_all_users(self, request):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def get_all_tasks(self, request):
+        tasks = Tasks.objects.all()
+        serializer = TasksSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # Crear una tarea
     def post(self, request):
         serializer = TasksSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(user=request.user)
             return Response(
-                {"message": "Task created successfully", "task": serializer.data},
+                (serializer.data),
                 status=status.HTTP_201_CREATED,
             )
         return Response(
             {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
         )
-
-    # Obtener todas las tareas
-    def get_all_tasks(self, request):
-        tasks = Tasks.objects.all()
-        serializer = TasksSerializer(tasks, many=True)
-        # Devuelve directamente la lista serializada, sin envolverla en un diccionario
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     # Eliminar una tarea
     def delete_task(self, request, id):

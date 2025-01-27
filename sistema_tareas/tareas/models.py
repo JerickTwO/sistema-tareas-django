@@ -3,10 +3,6 @@ from django.db import models
 
 
 class User(AbstractUser):
-    # ROLES = (
-    #     ("admin", "Administrador"),
-    #     ("estudiante", "Estudiante"),
-    # )
     rol = models.BooleanField(default=False)
     email = models.EmailField(unique=True)
 
@@ -15,15 +11,19 @@ class User(AbstractUser):
 
 
 class Tasks(models.Model):
+    STATUS_CHOICES = [
+        (0, "PENDIENTE"),
+        (1, "COMPLETADA"),
+        (2, "CANCELADA"),
+        (3, "ENPROGRESO"),
+    ]
     title = models.CharField(max_length=255)  # Título de la tarea
     description = models.TextField(null=True, blank=True)  # Descripción (opcional)
     due_date = models.DateTimeField(
         null=True, blank=True
     )  # Fecha de vencimiento (opcional)
     priority = models.CharField(max_length=255, null=True, blank=True)  # Prioridad
-    task_status = models.BooleanField(
-        default=False
-    )  # Estado de la tarea (False = pendiente, True = completada)
+    task_status = models.IntegerField(choices=STATUS_CHOICES, default=0)  # Estado (obligatorio)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE
     )  # Relación con el usuario (clave foránea)
