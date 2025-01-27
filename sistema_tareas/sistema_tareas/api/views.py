@@ -151,20 +151,26 @@ class TasksDetailView(APIView):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_comment(request, id):
+    # Verificar si la tarea existe
     try:
-        tasks = Tasks.objects.get(id=id)
+        task = Tasks.objects.get(id=id)
     except Tasks.DoesNotExist:
-        return Response({"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    content = request.data.get("content", "")
+    # Obtener el contenido desde los query params
+    content = request.query_params.get("content")
     if not content:
         return Response(
             {"error": "Content is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    comment = Comment.objects.create(task=tasks, content=content)
+    # Crear el comentario
+    comment = Comment.objects.create(task=task, user=request.user, content=content)
     serializer = CommentSerializer(comment)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(
+        (serializer.data),
+        status=status.HTTP_201_CREATED,
+    )
 
 
 # GET comments by tasks
@@ -184,7 +190,9 @@ class GetCommentsByTaskController(APIView):
             # Filtrar comentarios por task_id
             comments = Comment.objects.filter(task_id=task_id)
             if not comments.exists():
-                return Response({"message": "No comments found for this task"}, status=404)
+                return Response(
+                    {"message": "No comments found for this task"}, status=404
+                )
 
             serializer = CommentSerializer(comments, many=True)
             return Response(serializer.data, status=200)
