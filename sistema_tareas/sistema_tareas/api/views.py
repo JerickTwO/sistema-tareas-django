@@ -100,8 +100,8 @@ class TasksUpdateView(APIView):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def search_tasks(request, title):
-    taskss = Tasks.objects.filter(title__icontains=title)
-    serializer = TasksSerializer(taskss, many=True)
+    tasks = Tasks.objects.filter(title__icontains=title)
+    serializer = TasksSerializer(tasks, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -110,8 +110,8 @@ class TasksListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        taskss = Tasks.objects.all()
-        serializer = TasksSerializer(taskss, many=True)
+        tasks = Tasks.objects.all()
+        serializer = TasksSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -162,7 +162,7 @@ def create_comment(request, id):
             {"error": "Content is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    comment = Comment.objects.create(tasks=tasks, content=content)
+    comment = Comment.objects.create(task=tasks, content=content)
     serializer = CommentSerializer(comment)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -174,3 +174,86 @@ def get_comments_by_tasks(request, id):
     comments = Comment.objects.filter(tasks_id=id)
     serializer = CommentSerializer(comments, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GetCommentsByTaskController(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, task_id):
+        try:
+            task = Tasks.objects.get(pk=task_id, user=request.user)
+            comments = task.comments.all()
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data, status=200)
+        except Tasks.DoesNotExist:
+            return Response({"error": "Task not found"}, status=404)
+
+
+class CreateCommentController(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, task_id):
+        # Intentar obtener 'content' desde el cuerpo de la solicitud (JSON)
+        content = request.data.get("content")
+        if not content:
+            return Response({"error": "Content is required"}, status=400)
+
+        # Verificar si la tarea existe
+        try:
+            task = Tasks.objects.get(pk=task_id, user=request.user)
+        except Tasks.DoesNotExist:
+            return Response({"error": "Task not found"}, status=404)
+
+        # Crear el comentario
+        comment = Comment.objects.create(task=task, user=request.user, content=content)
+        serializer = CommentSerializer(comment)
+        return Response(
+            {"message": "Comment created successfully", "comment": serializer.data},
+            status=201,
+        )
+
+
+class GetTaskByIdController(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        try:
+            task = Tasks.objects.get(pk=id, user=request.user)
+            serializer = TasksSerializer(task)
+            return Response(serializer.data, status=200)
+        except Tasks.DoesNotExist:
+            return Response({"error": "Task not found"}, status=404)
+
+
+class UpdateTaskStatusController(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, status):
+        try:
+            task = Tasks.objects.get(pk=id, user=request.user)
+            # Actualiza el estado de la tarea
+            if status.lower() == "completed":
+                task.task_status = 1  # COMPLETADA
+            elif status.lower() == "cancelled":
+                task.task_status = 2  # CANCELADA
+            elif status.lower() == "inprogress":
+                task.task_status = 3  # ENPROGRESO
+            else:
+                task.task_status = 0  # PENDIENTE
+
+            task.save()
+            serializer = TasksSerializer(task)
+            return Response(serializer.data, status=200)  # Devuelve un array
+        except Tasks.DoesNotExist:
+            return Response({"error": "Task not found"}, status=404)
+
+
+
+class StudentTasksController(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Obtén las tareas asociadas al usuario autenticado
+        tasks = Tasks.objects.filter(user=request.user)
+        serializer = TasksSerializer(tasks, many=True)
+        return Response(serializer.data, status=200)
