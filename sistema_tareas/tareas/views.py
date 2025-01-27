@@ -64,7 +64,7 @@ class RegisterView(View):
                     "email": user.email,
                     "name": user.username,
                     "password": None,
-                    "role": "ESTUDIANTE" if user.rol == 1 else "ADMININSTRADOR",
+                    "role": "ESTUDIANTE" if user.rol == 1 else "ADMINISTRADOR",
                 },
                 status=201,
             )
@@ -95,7 +95,7 @@ class LoginView(View):
                     {
                         "jwt": tokens["jwt"],  # Incluye solo el token de acceso
                         "userId": user.id,  # ID del usuario autenticado
-                        "userRole": "ESTUDIANTE" if user.rol == 1 else "ADMININSTRADOR",
+                        "userRole": "ESTUDIANTE" if user.rol == 1 else "ADMINISTRADOR",
                     },
                     status=200,
                 )

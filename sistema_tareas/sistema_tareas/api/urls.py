@@ -1,43 +1,24 @@
 from django.urls import path
-from sistema_tareas.api.views import AdminController, StudentController
+from sistema_tareas.api.views import (
+    UserListView,
+    TasksCreateView,
+    TasksUpdateView,
+    TasksListView,
+    TasksDeleteView,
+    TasksDetailView,
+    create_comment,
+    get_comments_by_tasks,
+    search_tasks,
+)
 
 urlpatterns = [
-    # Rutas de AdminController
-    path("admin/users", AdminController.as_view(), name="get_all_users"),
-    path("admin/tasks", AdminController.as_view(), name="get_all_tasks"),
-    path("admin/task", AdminController.as_view(), name="post"),
-    
-    # path("admin/task/<int:id>", AdminController.as_view(), name="delete_task"),
-    # path("admin/task/<int:id>", AdminController.as_view(), name="update_task"),
-    # path(
-    #     "admin/tasks/search/<str:title>", AdminController.as_view(), name="search_task"
-    # ),
-    # path(
-    #     "admin/task/comment/<int:task_id>",
-    #     AdminController.as_view(),
-    #     name="post_comment",
-    # ),
-    # path(
-    #     "admin/comments/<int:task_id>",
-    #     AdminController.as_view(),
-    #     name="get_comments_by_task",
-    # ),
-    # Rutas de StudentController
-    # path("student/tasks", StudentController.as_view(), name="get"),
-    # path(
-    #     "student/task/<int:id>/<str:status>",
-    #     StudentController.as_view(),
-    #     name="update_task",
-    # ),
-    # path("student/task/<int:id>", StudentController.as_view(), name="get_task_by_id"),
-    # path(
-    #     "student/task/comment/<int:task_id>",
-    #     StudentController.as_view(),
-    #     name="post_comment",
-    # ),
-    # path(
-    #     "student/comments/<int:task_id>",
-    #     StudentController.as_view(),
-    #     name="get_comments_by_task",
-    # ),
+ # Rutas de AdminController
+    path("admin/users", UserListView.as_view(), name="get_users"),
+    path("admin/task", TasksCreateView.as_view(), name="post_task"),
+    path("admin/task/<int:id>", TasksUpdateView.as_view(), name="task_detail_update"),
+    path("admin/tasks/search/<str:title>", search_tasks, name="search_task"),
+    path("admin/tasks", TasksListView.as_view(), name="get_all_tasks"),
+    path("admin/task/delete/<int:id>", TasksDeleteView.as_view(), name="delete_task"),
+    path("admin/task/comment/<int:id>", create_comment, name="create_comment"),
+    path("admin/comments/<int:id>", get_comments_by_tasks, name="get_comments_by_task"),
 ]

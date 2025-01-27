@@ -7,32 +7,24 @@ from sistema_tareas.api.serializer import (
     TasksSerializer,
     CommentSerializer,
 )
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 
-class AdminController(APIView):
+# GET all users
+class UserListView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        if "tasks" in request.path:
-            return self.get_all_tasks(request)
-        elif "users" in request.path:
-            return self.get_all_users(request)
-        return Response(
-            {"error": "Invalid endpoint"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    def get_all_users(self, request):
+    def get(self, request):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def get_all_tasks(self, request):
-        tasks = Tasks.objects.all()
-        serializer = TasksSerializer(tasks, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # Crear una tarea
+# POST a new tasks
+class TasksCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = TasksSerializer(data=request.data)
         if serializer.is_valid():
@@ -45,143 +37,140 @@ class AdminController(APIView):
             {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Eliminar una tarea
-    def delete_task(self, request, id):
-        try:
-            task = Tasks.objects.get(pk=id)
-            task.delete()
-            return Response(
-                {"message": "Task deleted successfully"},
-                status=status.HTTP_204_NO_CONTENT,
-            )
-        except Tasks.DoesNotExist:
-            return Response(
-                {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
-            )
 
-    # Obtener una tarea por ID
-    def get_task(self, request, id):
-        try:
-            task = Tasks.objects.get(pk=id)
-            serializer = TasksSerializer(task)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Tasks.DoesNotExist:
-            return Response(
-                {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    # Actualizar una tarea
-    def put(self, request, id):
-        try:
-            task = Tasks.objects.get(pk=id)
-            serializer = TasksSerializer(task, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(
-                    {"message": "Task updated successfully", "task": serializer.data},
-                    status=status.HTTP_200_OK,
-                )
-            return Response(
-                {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
-            )
-        except Tasks.DoesNotExist:
-            return Response(
-                {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    # Buscar tarea por título
-    def search_task(self, request, title):
-        tasks = Tasks.objects.filter(title__icontains=title)
-        serializer = TasksSerializer(tasks, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # Crear un comentario
-    def post_comment(self, request, task_id):
-        content = request.data.get("content")
-        if not content:
-            return Response(
-                {"error": "Content is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            task = Tasks.objects.get(pk=task_id)
-        except Tasks.DoesNotExist:
-            return Response(
-                {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        comment = Comment.objects.create(task=task, user=request.user, content=content)
-        serializer = CommentSerializer(comment)
-        return Response(
-            {"message": "Comment created successfully", "comment": serializer.data},
-            status=status.HTTP_201_CREATED,
-        )
-
-    # Obtener comentarios de una tarea
-    def get_comments_by_task(self, request, task_id):
-        comments = Comment.objects.filter(task_id=task_id)
-        serializer = CommentSerializer(comments, many=True)
-        return Response({"comments": serializer.data}, status=status.HTTP_200_OK)
-
-
-class StudentController(APIView):
+# PUT update a tasks
+class TasksUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # Obtener tareas del usuario autenticado
-    def get(self, request):
-        tasks = Tasks.objects.filter(user=request.user)
-        serializer = TasksSerializer(tasks, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # Actualizar el estado de una tarea
-    def patch(self, request, id, status):
+    def put(self, request, id):
         try:
-            task = Tasks.objects.get(pk=id, user=request.user)
-            task.task_status = status.lower() == "completed"
-            task.save()
-            serializer = TasksSerializer(task)
-            return Response(
-                {"message": "Task updated successfully", "task": serializer.data},
-                status=status.HTTP_200_OK,
-            )
+            tasks = Tasks.objects.get(id=id)
         except Tasks.DoesNotExist:
             return Response(
-                {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-    # Obtener una tarea por ID
-    def get_task_by_id(self, request, id):
+        serializer = TasksSerializer(tasks, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # GET para obtener una tarea por ID
+    def get(self, request, id):
         try:
-            task = Tasks.objects.get(pk=id, user=request.user)
-            serializer = TasksSerializer(task)
+            tasks = Tasks.objects.get(id=id)
+            serializer = TasksSerializer(tasks)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Tasks.DoesNotExist:
             return Response(
-                {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-    # Crear un comentario
-    def post_comment(self, request, task_id):
-        content = request.data.get("content")
-        if not content:
-            return Response(
-                {"error": "Content is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+    # PUT para actualizar una tarea por ID
+    def put(self, request, id):
         try:
-            task = Tasks.objects.get(pk=task_id, user=request.user)
+            tasks = Tasks.objects.get(id=id)
+        except Tasks.DoesNotExist:
+            return Response(
+                {"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = TasksSerializer(tasks, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE: Eliminar una tarea por ID
+    def delete(self, request, id):
+        try:
+            task = Tasks.objects.get(id=id)
+            task.delete()
+            return Response(
+                {"message": "Task deleted successfully"}, status=status.HTTP_200_OK
+            )
         except Tasks.DoesNotExist:
             return Response(
                 {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        comment = Comment.objects.create(task=task, user=request.user, content=content)
-        serializer = CommentSerializer(comment)
+
+# GET search tasks by title
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def search_tasks(request, title):
+    taskss = Tasks.objects.filter(title__icontains=title)
+    serializer = TasksSerializer(taskss, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# GET all taskss
+class TasksListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        taskss = Tasks.objects.all()
+        serializer = TasksSerializer(taskss, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# DELETE a tasks
+class TasksDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        try:
+            tasks = Tasks.objects.get(id=id)
+            tasks.delete()
+            return Response(
+                {"message": "Tasks deleted successfully"}, status=status.HTTP_200_OK
+            )
+        except Tasks.DoesNotExist:
+            return Response(
+                {"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+# GET tasks by ID
+class TasksDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        try:
+            tasks = Tasks.objects.get(id=id)
+            serializer = TasksSerializer(tasks)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Tasks.DoesNotExist:
+            return Response(
+                {"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+# POST create a comment
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_comment(request, id):
+    try:
+        tasks = Tasks.objects.get(id=id)
+    except Tasks.DoesNotExist:
+        return Response({"error": "Tasks not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    content = request.data.get("content", "")
+    if not content:
         return Response(
-            {"message": "Comment created successfully", "comment": serializer.data},
-            status=status.HTTP_201_CREATED,
+            {"error": "Content is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Obtener comentarios por tarea
-    def get_comments_by_task(self, request, task_id):
-        comments = Comment.objects.filter(task_id=task_id, task__user=request.user)
-        serializer = CommentSerializer(comments, many=True)
-        return Response({"comments": serializer.data}, status=status.HTTP_200_OK)
+    comment = Comment.objects.create(tasks=tasks, content=content)
+    serializer = CommentSerializer(comment)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+# GET comments by tasks
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_comments_by_tasks(request, id):
+    comments = Comment.objects.filter(tasks_id=id)
+    serializer = CommentSerializer(comments, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
